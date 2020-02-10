@@ -1,4 +1,4 @@
-export const CONTRACT_ADDRESS = '0xb513afbB8669975b0151B7AF9F2c25264741bF58'
+export const CONTRACT_ADDRESS = '0x4337cF78DE6E3286A7F539D2da581E3F82F362Ff'
 
 export const ABI = [
 	{
@@ -123,6 +123,25 @@ export const ABI = [
 				"name": "",
 				"type": "string"
 			},
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "plates",
+		"outputs": [
 			{
 				"name": "",
 				"type": "uint256"

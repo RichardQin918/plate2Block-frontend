@@ -1,39 +1,21 @@
 import './App.css'
 import React from 'react'
 import Typography from '@material-ui/core/Typography'
-import CircularProgress from '@material-ui/core/CircularProgress'
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
 import Grid from '@material-ui/core/Grid'
-import Divider from '@material-ui/core/Divider'
 import TextField from '@material-ui/core/TextField'
 import Link from '@material-ui/core/Link'
-import Radio from '@material-ui/core/Radio'
-import RadioGroup from '@material-ui/core/RadioGroup'
-import Select from '@material-ui/core/Select'
-import Slider from '@material-ui/core/Slider'
-import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
-import FormControlLabel from '@material-ui/core/FormControlLabel'
-import DoneAllIcon from '@material-ui/icons/DoneAll'
-import FormHelperText from '@material-ui/core/FormHelperText';
-import FormLabel from '@material-ui/core/FormLabel';
-import { ChevronLeft, ChevronRight } from '@material-ui/icons'
-import InputLabel from '@material-ui/core/InputLabel';
-
-import {
-  MuiPickersUtilsProvider,
-  KeyboardDatePicker,
-} from '@material-ui/pickers'
-import DateFnsUtils from '@date-io/date-fns'
 import { ethers } from 'ethers'
+import Web3 from 'web3'
+
 import {
   BrowserRouter,
   Switch,
   Route,
   Redirect,
   Link as RouterLink,
-  useLocation,
   useHistory,
 } from 'react-router-dom'
 
@@ -44,7 +26,8 @@ import {
 import { makeStyles } from '@material-ui/core/styles';
 
 const NETWORK = 'ropsten'
- 
+let web3
+
 const useStyles = makeStyles(theme => ({
   root: {
     flexGrow: 1,
@@ -89,16 +72,19 @@ function AppHeader() {
 
 function AppBody() {
   const classes = useStyles();
+  if (window.ethereum) {
+    window.web3 = new Web3(window.ethereum);
+    window.web3.setProvider(window.web3.currentProvider);
+  }
   const [savedAddress, setSavedAddress] = React.useState(
-    window.localStorage.getItem('ethAddress') || '',
+    window.web3.eth.accounts.givenProvider.selectedAddress
   )
 
   React.useEffect(() => {
-    if (savedAddress) {
-      console.log('got!')
-      window.localStorage.setItem('ethAddress', savedAddress)
-    } else {
-      window.localStorage.removeItem('ethAddress')
+    if (savedAddress !== window.web3.eth.accounts.givenProvider.selectedAddress
+      ) {
+        console.log('updated!')
+        setSavedAddress(window.web3.eth.accounts.givenProvider.selectedAddress)
     }
   }, [savedAddress])
 
@@ -173,7 +159,6 @@ function LoginPage({savedAddress, setSavedAddress, classes, isLoggedIn}) {
     setEthAddress(accounts)
   }
   const toPart1 = () => {
-    console.log('clicked!')
     setSavedAddress(ethAddress)
   }
 
@@ -275,23 +260,32 @@ function RegisterPage({ethAddress}) {
 
 
   async function register() {
-    const provider = ethers.getDefaultProvider(NETWORK)
-    let contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-    let transactionObject = {
-      nonce: await provider.getTransactionCount(CONTRACT_ADDRESS),
-      gasLimit: 35000,
-      gasPrice: await provider.getGasPrice(),
-      chainId: ethers.utils.getNetwork('ropsten').chainId
+    if (window.ethereum) {
+      window.web3 = new Web3(window.ethereum);
+      try {
+        await window.ethereum.enable();
+        let etherProvider = new ethers.providers.Web3Provider(window.web3.currentProvider)    
+        // let contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+        window.web3.setProvider(window.web3.currentProvider);
+        let contract = new window.web3.eth.Contract(ABI, CONTRACT_ADDRESS, {
+          from: ethAddress,
+          gasPrice: await etherProvider.getGasPrice()
+        })
+
+        let transactionObject = {
+          // nonce: await etherProvider.getTransactionCount(CONTRACT_ADDRESS),
+          // gasLimit: 35000,
+          gas: 210000,
+          // chainId: ethers.utils.getNetwork('ropsten').chainId
+        }
+        let result = await contract.methods.register(name, address, VIN, plate).send(transactionObject)
+        console.log('this is result: ', result)
+        history.push('/registerResult')
+      } catch (error) {
+        console.log('register failed!: ', error)
+      }
     }
-    try {
-      let result = await contract.methods.register(name, address, ethAddress, VIN, plate).send(transactionObject)
-      console.log('this is result: ', result)
-    }
-    catch(error) {
-      console.log('register failed: ', error)
-    }
-    //register code
-    history.push('/registerResult')
+    
   }
 
   return (<div>
@@ -320,7 +314,7 @@ function RegisterPage({ethAddress}) {
           <Button 
             variant='outlined' 
             onClick={register}
-            disabled={name === '' || address === '' || plate === '' || VIN === '' || VIN.length !== 17 || !isValidPlate}
+            // disabled={name === '' || address === '' || plate === '' || VIN === '' || VIN.length !== 17 || !isValidPlate}
           >Register</Button>
           <Grid item xs={6}>
             <Button 
@@ -339,12 +333,6 @@ function RegisterPage({ethAddress}) {
 function SearchPage() {
   const history = useHistory()
 
-  const [selectedDate, setSelectedDate] = React.useState(new Date('2014-08-18T21:11:54'));
-
-  const handleDateChange = date => {
-    setSelectedDate(date);
-  };
-
   const classes = useStyles();
   const [searchKey, setSearchKey] = React.useState('');
 
@@ -353,9 +341,7 @@ function SearchPage() {
   };
 
   function search() {
-    // localStorage.setItem('q3', JSON.stringify({key: 'q3', question: 'When is your birthday ?', answer: dateString}))
-    // localStorage.setItem('q4', JSON.stringify({key: 'q4', question: 'Which province do your reside in ?', answer: province}))
-
+    // Incomplete search function
     history.push('/searchResult')
   }
 
@@ -384,11 +370,28 @@ function SearchPage() {
     </FormControl>
   </div>)
 }
-function RegisterResultPage() {
+async function RegisterResultPage() {
   const history = useHistory()
   const classes = useStyles();
   let list = [{key: 'test', id: 1, name: 'name', value: 'value'}]
-  
+  if (window.ethereum) {
+    window.web3 = new Web3(window.ethereum);
+    try {
+      await window.ethereum.enable();
+      let etherProvider = new ethers.providers.Web3Provider(window.web3.currentProvider)    
+      // let contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+      window.web3.setProvider(window.web3.currentProvider);
+      let contract = new window.web3.eth.Contract(ABI, CONTRACT_ADDRESS, {
+        from: window.web3.eth.accounts.givenProvider.selectedAddress
+        ,
+        gasPrice: await etherProvider.getGasPrice()
+      })
+      let result = await contract.methods.getLicenserByETHAddress(window.web3.eth.accounts.givenProvider.selectedAddress).call()
+      console.log('this is register result: ', result)
+    } catch (error) {
+      console.log('register failed!: ', error)
+    }
+  }
 
 
   return (
@@ -420,6 +423,7 @@ function SearchResultPage() {
   const classes = useStyles();
   let list = [{key: 'test', id: 1, name: 'name', value: 'value'}]
   
+      // Incomplete searchResult function
 
 
   return (

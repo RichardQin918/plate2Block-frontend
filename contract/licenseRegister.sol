@@ -2,7 +2,7 @@ pragma solidity ^0.4.2;
 
 contract LicenseRegister {
 
-    
+    uint[] public plates;
 
     struct License {
         string name;
@@ -22,10 +22,8 @@ contract LicenseRegister {
 
     mapping(address => License) licenseByETHAddress;
 
-
-    
-
     function register(string name, string _address, string VIN, uint plateNumber) public {
+        require(plates[plateNumber] == 0, 'plateNumber already taken');
         licenseByVIN[VIN] = License(name, _address, msg.sender, VIN, plateNumber);
         licenseByPlateNumber[plateNumber] = License(name, _address, msg.sender, VIN, plateNumber);
         licenseByETHAddress[msg.sender] = License(name, _address, msg.sender, VIN, plateNumber);
