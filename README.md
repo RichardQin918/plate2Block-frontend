@@ -11,39 +11,39 @@
 ### To build a web application on which users can look up ownership of license plate, as well as generate & register themselves new plate through Ethereum blockchain.
 ##### Data
 ### User Interface Data
-	Username(FirstName, LastName) string
-	UserAddresses string
-	VIN number string
-	Plate number 7-digit integer
+## Username(FirstName, LastName) string
+## UserAddresses string
+## VIN number string
+## Plate number 7-digit integer
 ### Smart Contract Data
-	Address OwnerAddress
-	String Username
-	String UserAddress
-	String VIN number
-	Uint256 Plate number
-	Mapping OwnerAddress => list of Plates
-	Mapping Username => OwnerAddress
-	Mapping OwnerAddress => Username
-	Mapping Plate => OwnerAddress
+## Address OwnerAddress
+## String Username
+## String UserAddress
+## String VIN number
+## Uint256 Plate number
+## Mapping OwnerAddress => list of Plates
+## Mapping Username => OwnerAddress
+## Mapping OwnerAddress => Username
+## Mapping Plate => OwnerAddress
 ##### Functions
 ### User Interface functions
-	searchInfoByETHAddress(eth address)returns object
-	searchInfoByVIN(VIN)returns object
-	searchInfoByPlate(plate)returns object
-	registerNewPlate(username, userAddress, VIN, plate#) returns bool
-	verifyOwnership(plate#) returns string
-	generateRandomPlateNumber() returns list of int
+## searchInfoByETHAddress(eth address)returns object
+## searchInfoByVIN(VIN)returns object
+## searchInfoByPlate(plate)returns object
+## registerNewPlate(username, userAddress, VIN, plate#) returns bool
+## verifyOwnership(plate#) returns string
+## generateRandomPlateNumber() returns list of int
 ### Smart Contract functions
-	getInfoByAddress(address address) returns array
-	getInfoByVIN(string VIN) returns array
-	getInfoByPlate(uint256 plate) returns array
-	isOwner(uint256 plate#, address address) returns bool
-	register(uint256 plate#, address address) returns object
+## getInfoByAddress(address address) returns array
+## getInfoByVIN(string VIN) returns array
+## getInfoByPlate(uint256 plate) returns array
+## isOwner(uint256 plate#, address address) returns bool
+## register(uint256 plate#, address address) returns object
 ##### Type of Architecture
 ### UserInterface
-	Javascript/html/css + nodejs + web3/ethers
+## Javascript/html/css + nodejs + web3/ethers
 ### Smart Contract
-	Truffle-suite + openzepplin
+## Truffle-suite + openzepplin
 
 ##### Project plan
 List of tasks
