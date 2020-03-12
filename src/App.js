@@ -7,8 +7,7 @@ import Grid from '@material-ui/core/Grid'
 import TextField from '@material-ui/core/TextField'
 import Link from '@material-ui/core/Link'
 import FormControl from '@material-ui/core/FormControl'
-import { ethers } from 'ethers'
-import Web3 from 'web3'
+import axios from './utils/axios'
 
 import {
   BrowserRouter,
@@ -24,9 +23,6 @@ import {
   ABI
 } from './constants'
 import { makeStyles } from '@material-ui/core/styles';
-
-const NETWORK = 'ropsten'
-let web3
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -65,28 +61,16 @@ export default function App() {
 function AppHeader() {
   return (
     <div className='AppHeader'>
-      <Typography component='h1'>License Registration App</Typography>
+      <Typography component='h1'>Plate2Block</Typography>
     </div>
   )
 }
 
 function AppBody() {
   const classes = useStyles();
-  if (window.ethereum) {
-    window.web3 = new Web3(window.ethereum);
-    window.web3.setProvider(window.web3.currentProvider);
-  }
-  const [savedAddress, setSavedAddress] = React.useState(
-    window.web3.eth.accounts.givenProvider.selectedAddress
+  const [savedUsername, setSavedUsername] = React.useState(
+   ''
   )
-
-  React.useEffect(() => {
-    if (savedAddress !== window.web3.eth.accounts.givenProvider.selectedAddress
-      ) {
-        console.log('updated!')
-        setSavedAddress(window.web3.eth.accounts.givenProvider.selectedAddress)
-    }
-  }, [savedAddress])
 
   return (
     <Switch>
@@ -95,33 +79,27 @@ function AppBody() {
         exact={true}
         render={() => (
           <LoginPage
-            savedAddress={savedAddress}
-            setSavedAddress={setSavedAddress}
+            savedUsername={savedUsername}
+            setSavedUsername={setSavedUsername}
             classes={classes} 
-            isLoggedIn={Boolean(savedAddress)}
+            isLoggedIn={Boolean(savedUsername)}
           />
         )}
       />
       <LoggedInRoute
-        isLoggedIn={Boolean(savedAddress)}
+        isLoggedIn={Boolean(savedUsername)}
         path='/main'
         exact={true}
         render={() => <MainPage />}
       />
       <LoggedInRoute
-        isLoggedIn={Boolean(savedAddress)}
-        path='/main'
-        exact={true}
-        render={() => <MainPage />}
-      />
-      <LoggedInRoute
-        isLoggedIn={Boolean(savedAddress)}
+        isLoggedIn={Boolean(savedUsername)}
         path='/register'
         exact={true}
-        render={() => <RegisterPage ethAddress={savedAddress}/>}
+        render={() => <RegisterPage username={savedUsername}/>}
       />
       <LoggedInRoute
-        isLoggedIn={Boolean(savedAddress)}
+        isLoggedIn={Boolean(savedUsername)}
         path='/search'
         exact={true}
         render={() => <SearchPage
@@ -129,18 +107,34 @@ function AppBody() {
         />}
       />
       <LoggedInRoute
-        isLoggedIn={Boolean(savedAddress)}
+        isLoggedIn={Boolean(savedUsername)}
+        path='/renew'
+        exact={true}
+        render={() => <RenewPage
+          
+        />}
+      />
+      <LoggedInRoute
+        isLoggedIn={Boolean(savedUsername)}
+        path='/changeOwner'
+        exact={true}
+        render={() => <ChangeOwnerPage
+          
+        />}
+      />
+      <LoggedInRoute
+        isLoggedIn={Boolean(savedUsername)}
         path='/registerResult'
         exact={true}
         render={() => <RegisterResultPage 
         />}
       />
       <LoggedInRoute
-        isLoggedIn={Boolean(savedAddress)}
+        isLoggedIn={Boolean(savedUsername)}
         path='/searchResult'
         exact={true}
         render={() => <SearchResultPage 
-          ethAddress={savedAddress}
+          username={savedUsername}
         />}
       />
 
@@ -148,55 +142,56 @@ function AppBody() {
   )
 }
 
-function LoginPage({savedAddress, setSavedAddress, classes, isLoggedIn}) {
-  const [ethAddress, setEthAddress] = React.useState(
-    window.localStorage.getItem('ethAddress') || '',
-  )
+function LoginPage({savedUsername, setSavedUsername, classes, isLoggedIn}) {
+const [username, setUsername] = React.useState(
+  window.localStorage.getItem('username') || '',
+)
 
-  const onChangeAddress = async event => {
-    const accounts = await window.ethereum.enable()
-    console.log('Accounts found:', accounts)
-    setEthAddress(accounts)
-  }
-  const toPart1 = () => {
-    setSavedAddress(ethAddress)
-  }
+const onChangeAddress = async event => {
+  const newName = event.target.value
+  console.log('newNames found:', event.target.value)
+  setUsername(newName)
+}
+const toPart1 = () => {
+  setSavedUsername(username)
+  window.localStorage.setItem("username", username)
+}
 
-  return (
-    <div>
-      {savedAddress?
-        <Redirect to='/main' />  
-        :
-        <Grid container={true} justify='space-between'>
-          <Typography component='h1' gutterBottom={true}>
-            Welcome to our License registration APP!
-          </Typography>
-          <Typography variant='h5' component='h1' align='left'>
-            Please make sure you are connected to an Ethereum Node in Ropsten network
-          </Typography>
-            <form className={classes.root} noValidate autoComplete="off">
-              <Grid item xs={12} lg={6}>
-                <TextField  value={ethAddress} onChange={onChangeAddress}  id="standard-basic" label="Name" />
-                <Grid style={{ marginTop: 10 }} container spacing={1}>
-                  <Grid item xs={6}>
-                    <Button 
-                      variant='outlined' 
-                      onClick={toPart1}
-                      disabled={ethAddress === ''}
-                    >CONTINUE</Button>
-                  </Grid>
+return (
+  <div>
+    {savedUsername?
+      <Redirect to='/main' />  
+      :
+      <Grid container={true} justify='space-between'>
+        <Typography component='h1' gutterBottom={true}>
+          Welcome to our Plate2Block!
+        </Typography>
+        <Typography variant='h5' component='h1' align='left'>
+          Pick a name for yourself and get started
+        </Typography>
+          <form className={classes.root} noValidate autoComplete="off">
+            <Grid item xs={12} lg={6}>
+              <TextField  value={username} onChange={onChangeAddress}  id="standard-basic" label="Name" />
+              <Grid style={{ marginTop: 10 }} container spacing={1}>
+                <Grid item xs={6}>
+                  <Button 
+                    variant='outlined' 
+                    onClick={toPart1}
+                    disabled={username === ''}
+                  >CONTINUE</Button>
                 </Grid>
               </Grid>
-            
-            </form>
+            </Grid>
+          
+          </form>
 
-            <Link to='/' component={RouterLink}>
-              Back to start
-            </Link>
-        </Grid>
-        }
-    </div>
-  )
+          <Link to='/' component={RouterLink}>
+            Back to start
+          </Link>
+      </Grid>
+      }
+  </div>
+)
 }
 
 function MainPage() {
@@ -211,6 +206,14 @@ function MainPage() {
     history.push('/register')
   }
 
+  function goToRenew() {
+    history.push('/renew')
+  }
+
+  function goToChangeOwner() {
+    history.push('/changeOwner')
+  }
+
   return (<div>
     <FormControl component="fieldset" className={classes.formControl}>
       <Grid container spacing={3} >
@@ -220,6 +223,12 @@ function MainPage() {
         <Grid item xs={12} sm={6}>
           <Button onClick={goToSearch} variant='outlined'>Search</Button>
         </Grid>
+        <Grid item xs={12} sm={6}>
+          <Button onClick={goToRenew} variant='outlined'>Renew</Button>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Button onClick={goToChangeOwner} variant='outlined'>ChangeOwner</Button>
+        </Grid>
       </Grid>
     </FormControl>
 
@@ -227,7 +236,7 @@ function MainPage() {
   </div>)
 }
 
-function RegisterPage({ethAddress}) {
+function RegisterPage({username}) {
   const classes = useStyles();
   const [name, setName] = React.useState('');
   const [address, setAddress] = React.useState('');
@@ -260,32 +269,7 @@ function RegisterPage({ethAddress}) {
 
 
   async function register() {
-    if (window.ethereum) {
-      window.web3 = new Web3(window.ethereum);
-      try {
-        await window.ethereum.enable();
-        let etherProvider = new ethers.providers.Web3Provider(window.web3.currentProvider)    
-        // let contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-        window.web3.setProvider(window.web3.currentProvider);
-        let contract = new window.web3.eth.Contract(ABI, CONTRACT_ADDRESS, {
-          from: ethAddress,
-          gasPrice: await etherProvider.getGasPrice()
-        })
-
-        let transactionObject = {
-          // nonce: await etherProvider.getTransactionCount(CONTRACT_ADDRESS),
-          // gasLimit: 35000,
-          gas: 210000,
-          // chainId: ethers.utils.getNetwork('ropsten').chainId
-        }
-        let result = await contract.methods.register(name, address, VIN, plate).send(transactionObject)
-        console.log('this is result: ', result)
-        history.push('/registerResult')
-      } catch (error) {
-        console.log('register failed!: ', error)
-      }
-    }
-    
+    console.log('registered!')    
   }
 
   return (<div>
@@ -306,7 +290,7 @@ function RegisterPage({ethAddress}) {
           {isValidPlate ? null : <Typography style={{color: 'red'}}>Please input plate number in valid form</Typography>}
         </Grid>
         <Grid item xs={12} lg={6}>
-          <TextField  value={ethAddress}  id="standard-basic" label="ETH Address" />
+          <TextField  value={username}  id="standard-basic" label="ETH Address" />
         </Grid>
       </form>
       <Grid style={{ marginTop: 10 }} container spacing={1}>
@@ -342,6 +326,8 @@ function SearchPage() {
 
   function search() {
     // Incomplete search function
+
+
     history.push('/searchResult')
   }
 
@@ -349,7 +335,7 @@ function SearchPage() {
     <FormControl className={classes.formControl}>
       <form className={classes.root} noValidate autoComplete="off">
         <Grid item xs={12} lg={6}>
-          <TextField  value={searchKey} onChange={handleSearchKey}  id="standard-basic" label="ETHAddress, VIN or plate#" />
+          <TextField  value={searchKey} onChange={handleSearchKey}  id="standard-basic" label="username, VIN or plate#" />
         </Grid>
       </form>
       <Grid style={{ marginTop: 10 }} container spacing={1}>
@@ -370,29 +356,79 @@ function SearchPage() {
     </FormControl>
   </div>)
 }
+
+function RenewPage() {
+  const classes = useStyles();
+  const history = useHistory()
+
+  const [searchKey2, setSearchKey2] = React.useState('');
+  const [searchKey3, setSearchKey3] = React.useState('');
+
+  const handleSearchKey2 = event => {
+    setSearchKey2(event.target.value);
+  };
+
+  const handleSearchKey3 = event => {
+    setSearchKey3(event.target.value);
+  };
+
+  function update() {
+    // Incomplete search function
+
+
+    history.push('/searchResult')
+  }
+
+  // Incomplete renew page
+  return (
+    <div>
+      <FormControl>
+      <form className={classes.root} noValidate autoComplete="off">
+        <Grid item xs={12} lg={6}>
+          <TextField  value={searchKey2} onChange={handleSearchKey2}  id="standard-basic" label="username, VIN or plate#" />
+        </Grid>
+        <Grid item xs={12} lg={6}>
+          <TextField  value={searchKey3} onChange={handleSearchKey3}  id="standard-basic2" label="update#" />
+        </Grid>
+      </form>
+      
+      <Grid style={{ marginTop: 10 }} container spacing={1}>
+        <Grid item xs={6}>
+          <Button 
+            variant='outlined' 
+            onClick={update}
+            disabled={searchKey2 === '' || searchKey3 === ''}
+          >Update</Button>
+        </Grid>
+        <Grid item xs={6}>
+          <Button 
+            variant='outlined' 
+            onClick={() => history.goBack()}
+          >Back</Button>
+        </Grid>
+      </Grid>
+      </FormControl>
+    </div>
+  )
+}
+
+function ChangeOwnerPage() {
+  const classes = useStyles();
+
+  // Incomplete changeownerPage
+  return (
+    <div>
+      <FormControl>
+
+      </FormControl>
+    </div>
+  )
+}
+
 async function RegisterResultPage() {
   const history = useHistory()
   const classes = useStyles();
   let list = [{key: 'test', id: 1, name: 'name', value: 'value'}]
-  if (window.ethereum) {
-    window.web3 = new Web3(window.ethereum);
-    try {
-      await window.ethereum.enable();
-      let etherProvider = new ethers.providers.Web3Provider(window.web3.currentProvider)    
-      // let contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-      window.web3.setProvider(window.web3.currentProvider);
-      let contract = new window.web3.eth.Contract(ABI, CONTRACT_ADDRESS, {
-        from: window.web3.eth.accounts.givenProvider.selectedAddress
-        ,
-        gasPrice: await etherProvider.getGasPrice()
-      })
-      let result = await contract.methods.getLicenserByETHAddress(window.web3.eth.accounts.givenProvider.selectedAddress).call()
-      console.log('this is register result: ', result)
-    } catch (error) {
-      console.log('register failed!: ', error)
-    }
-  }
-
 
   return (
       <div className={classes.root}>
